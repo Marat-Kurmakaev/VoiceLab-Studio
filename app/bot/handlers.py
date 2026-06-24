@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from aiogram import F, Router
-from aiogram.filters import CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import Message
 
-from app.bot.api_client import ApiClient, IncomingMedia
+from app.bot.api_client import ApiClient, IncomingMedia, TaskStatusView
 from app.bot.keyboards import main_menu
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,22 @@ async def handle_help(message: Message) -> None:
 
 @router.message(F.text.casefold() == "task status")
 async def handle_status_placeholder(message: Message) -> None:
-    await message.answer("Task status lookup will be connected after the API task endpoints are implemented.")
+    await message.answer("Use /status <task_id> to check task progress.")
+
+
+@router.message(Command("status"))
+async def handle_status_command(message: Message, command: CommandObject, api_client: ApiClient) -> None:
+    task_id = command.args.strip() if command.args else ""
+    if not task_id:
+        await message.answer("Use /status <task_id>.")
+        return
+
+    task = await api_client.get_task(task_id)
+    if task is None:
+        await message.answer("Task was not found or the API is unavailable.")
+        return
+
+    await message.answer(format_task_status(task))
 
 
 @router.message(F.voice)
@@ -104,4 +120,34 @@ async def create_task(message: Message, api_client: ApiClient, media: IncomingMe
         await message.answer("File received. Task API is not connected yet, so processing was not queued.")
         return
 
-    await message.answer(f"Task created: {task_id}")
+    status_message = await message.answer(f"Task created: {task_id}\nProgress: queued")
+    await poll_task_progress(status_message, api_client, task_id)
+
+
+async def poll_task_progress(message: Message, api_client: ApiClient, task_id: str) -> None:
+    last_text = ""
+    for _ in range(8):
+        await asyncio.sleep(2)
+        task = await api_client.get_task(task_id)
+        if task is None:
+            return
+
+        text = f"Task created: {task_id}\n{format_task_status(task)}"
+        if text != last_text:
+            await message.edit_text(text)
+            last_text = text
+        if task.status in {"completed", "failed", "cancelled"}:
+            return
+
+
+def format_task_status(task: TaskStatusView) -> str:
+    lines = [
+        f"Status: {task.status}",
+        f"Stage: {task.stage}",
+        f"Progress: {task.progress}%",
+    ]
+    if task.output_file_path:
+        lines.append("Result is ready.")
+    if task.error_message:
+        lines.append(f"Error: {task.error_message}")
+    return "\n".join(lines)

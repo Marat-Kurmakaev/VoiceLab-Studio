@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.api.routers.models import router as models_router
+from app.api.routers.tasks import router as tasks_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 
@@ -14,6 +15,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title=settings.app_name)
     app.include_router(models_router)
+    app.include_router(tasks_router)
 
     @app.get("/health")
     async def health() -> dict[str, str]:

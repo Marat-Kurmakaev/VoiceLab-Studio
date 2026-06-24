@@ -25,6 +25,7 @@ class TaskStage(StrEnum):
 
 
 class TaskType(StrEnum):
+    TRANSCRIPTION = "transcription"
     VOICE_CONVERSION = "voice_conversion"
     AUDIO_COVER = "audio_cover"
     VIDEO_EXTRACT_AUDIO = "video_extract_audio"

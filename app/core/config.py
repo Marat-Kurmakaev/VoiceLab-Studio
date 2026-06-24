@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379/0"
     api_base_url: str = "http://api:8000"
     gemini_api_key: str = "replace-me"
+    gemini_model: str = "gemini-2.0-flash"
+    gemini_transcription_backend: str = "auto"
+    gemini_max_inline_mb: int = 20
+    gemini_timeout_seconds: int = 120
 
     storage_root: Path = Field(default=Path("storage"))
     models_root: Path = Field(default=Path("models"))

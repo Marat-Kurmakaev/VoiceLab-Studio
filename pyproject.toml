@@ -30,6 +30,7 @@ dev = [
 voicelab-api = "app.api.main:run"
 voicelab-bot = "app.bot.main:run"
 voicelab-enqueue-fake = "app.workers.enqueue_fake:run"
+voicelab-gemini-smoke = "app.gemini.smoke:run"
 voicelab-media-smoke = "app.media.smoke:run"
 voicelab-rvc-smoke = "app.rvc.smoke:run"
 voicelab-worker = "app.workers.main:run"
