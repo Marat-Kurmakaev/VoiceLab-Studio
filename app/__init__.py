@@ -1,0 +1,1 @@
+"""VoiceLab Studio application package."""

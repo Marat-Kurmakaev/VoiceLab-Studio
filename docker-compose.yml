@@ -1,0 +1,112 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    command: voicelab-api
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      DATABASE_URL: postgresql+asyncpg://voicelab:voicelab@db:5432/voicelab
+      REDIS_URL: redis://redis:6379/0
+      API_BASE_URL: http://api:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./storage:/app/storage
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    command: voicelab-bot
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://voicelab:voicelab@db:5432/voicelab
+      REDIS_URL: redis://redis:6379/0
+      API_BASE_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    command: voicelab-worker
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://voicelab:voicelab@db:5432/voicelab
+      REDIS_URL: redis://redis:6379/0
+      API_BASE_URL: http://api:8000
+    volumes:
+      - ./models:/app/models
+      - ./storage:/app/storage
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: voicelab
+      POSTGRES_USER: voicelab
+      POSTGRES_PASSWORD: voicelab
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voicelab -d voicelab"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  rvc-worker:
+    profiles:
+      - gpu
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.rvc-worker
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://voicelab:voicelab@db:5432/voicelab
+      REDIS_URL: redis://redis:6379/0
+      API_BASE_URL: http://api:8000
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - ./models:/app/models
+      - ./storage:/app/storage
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    gpus: all
+
+volumes:
+  postgres-data:

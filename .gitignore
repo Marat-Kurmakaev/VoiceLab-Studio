@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Databases
+*.sqlite
+*.sqlite3
+*.db
+
+# Media / generated files
+storage/uploads/
+storage/outputs/
+storage/tmp/
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.srt
+*.ass
+
+# ML models / datasets
+models/
+MODELS/
+datasets/
+*.pth
+*.pt
+*.onnx
+*.index
+*.ckpt
+*.safetensors
+
+# Archives
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+
+# Markdown rule:
+# README.md is the only Markdown file allowed in Git tracking.
+*.md
+!README.md
